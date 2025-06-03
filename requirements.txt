@@ -1,0 +1,13 @@
+requests
+pypdf
+cryptography
+torch
+sentence_transformers
+scikit-learn
+nltk
+transformers
+streamlit
+rank_bm25
+accelerate
+bitsandbytes
+openai
