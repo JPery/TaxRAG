@@ -14,7 +14,7 @@ MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 class Chatbot:
     def __init__(self, retriever, model_name=MODEL_NAME, device_map="auto", load_in_8bit=False, load_in_4bit=True, ):
         self.retriever = retriever
-        self.conversation_history = ""
+        self.conversation_history = []
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
         print(f"Loading Model")
 
@@ -59,8 +59,8 @@ class Chatbot:
         rag_context = f"<|context|>\n{CONTEXT_PROMPT}\n\n{context}\n"
 
         prompt = SYSTEM_PROMPT + rag_context
-        if self.conversation_history != "":
-            prompt += '<|history|>\n' + self.conversation_history
+        if self.conversation_history:
+            prompt += '<|history|>\n' + "\n".join(self.conversation_history)
         prompt += f"<|user|>\n{query}\n"
         return prompt
 
@@ -97,7 +97,7 @@ class Chatbot:
         print(f"Response: {full_response}")
 
         # Update conversation history
-        self.conversation_history += f"<|user|>\n{query}\n<|assistant|>{full_response}\n"
+        self.conversation_history.extend([f"<|user|>\n{query}", f"<|assistant|>\n{full_response}"])
 
         return full_response
 
@@ -130,12 +130,12 @@ class Chatbot:
         response = full_response.replace(prompt, "").strip()
 
         # ---  ACTUALIZA EL HISTORIAL  ---
-        self.conversation_history += f"<|user|>\n{query}\n<|assistant|>{response}\n"
+        self.conversation_history.extend([f"<|user|>\n{query}", f"<|assistant|>\n{response}"])
 
         return response
 
     def clear_history(self):
         """Limpia el historial de la conversación."""
-        self.conversation_history = ""
+        self.conversation_history = []
         self.relevant_docs = None
 

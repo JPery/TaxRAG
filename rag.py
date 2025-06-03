@@ -5,7 +5,7 @@ import streamlit as st
 from huggingface_hub import login
 
 from agent.chatbot import Chatbot
-from agent.constants import APP_NAME, DEFAULT_LANG, DATA_FOLDER, HF_TOKEN, DEFAULT_TOP_K, WELCOME_MESSAGE
+from agent.constants import APP_NAME, DEFAULT_LANG, DATA_FOLDER, HF_TOKEN, DEFAULT_TOP_K, WELCOME_MESSAGE, MAX_TOP_K
 from agent.retrievers import HybridRetriever
 
 torch.classes.__path__ = []  # add this line to manually set it to empty.
@@ -56,7 +56,7 @@ def main():
     # --- Barra lateral (opciones) ---
     with st.sidebar:
         st.header("Opciones")
-        top_k = st.slider("Número de documentos a recuperar (top_k)", min_value=1, max_value=25, value=DEFAULT_TOP_K)
+        top_k = st.slider("Número de documentos a recuperar (top_k)", min_value=1, max_value=MAX_TOP_K, value=DEFAULT_TOP_K)
         if st.button("Limpiar historial"):
             chatbot.clear_history()
             st.success("Historial limpiado.")
@@ -66,11 +66,11 @@ def main():
     # --- Interfaz principal (chat) ---
 
     # Muestra el historial de la conversación
-    for message in chatbot.conversation_history.split("</s>\n"):  # Separamos por los tokens de fin
+    for message in chatbot.conversation_history:  # Separamos por los tokens de fin
         if message.strip():  # Evita mensajes vacíos
             if "<|user|>" in message:
                 with st.chat_message('user'):
-                    st.write(message.replace("<|user|>", "").replace("Consulta del usuario:", "").strip())
+                    st.write(message.replace("<|user|>", "").strip())
             elif "<|assistant|>" in message:
                 with st.chat_message('assistant'):
                     st.write(message.replace("<|assistant|>", "").strip())
