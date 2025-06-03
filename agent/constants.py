@@ -1,7 +1,10 @@
+import os
+
 APP_NAME = "TaxRAG"
 DATA_FOLDER = "renta2024"
-OPEN_AI_API_KEY = ""
-HF_TOKEN = ""
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY", "")
+USE_OFFLINE_AGENTS = os.getenv("USE_OFFLINE_AGENTS", 'False').lower() in ('true', '1', 't')
 SENTENCE_TRANSFORMER_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_LANG = "english"
 DEFAULT_TOP_K = 25

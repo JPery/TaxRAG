@@ -2,51 +2,40 @@ from typing import List
 import torch
 import streamlit as st
 from openai import OpenAI
-from transformers import AutoModelForCausalLM, BitsAndBytesConfig, AutoTokenizer, TextStreamer, pipeline
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig, AutoTokenizer, TextStreamer
 
-from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_PROMPT, OPEN_AI_API_KEY
+from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_PROMPT, OPENAI_API_KEY,  USE_OFFLINE_AGENTS
 
 client = OpenAI(
-    api_key=OPEN_AI_API_KEY,
+    api_key=OPENAI_API_KEY,
 )
 MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+
 
 class Chatbot:
     def __init__(self, retriever, model_name=MODEL_NAME, device_map="auto", load_in_8bit=False, load_in_4bit=True, ):
         self.retriever = retriever
         self.conversation_history = []
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        print(f"Loading Model")
 
         bnb_config = BitsAndBytesConfig(
             load_in_8bit=True,
             bnb_8bit_quant_type="fp8",  # Menos agresivo que nf4
             bnb_8bit_use_double_quant=False  # Sin doble cuantización para más estabilidad
         )
+        if USE_OFFLINE_AGENTS:
+            print(f"Loading local Models")
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                torch_dtype=torch.float16,
+                trust_remote_code=True,
+                device_map=device_map,  # Importante:  usar device_map
+                cache_dir="models/" + model_name,
+                quantization_config=bnb_config,  # Aquí aplicamos la cuantización
+            )
+        else:
+            print("Using OpenAI API")
 
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=torch.float16,
-            trust_remote_code=True,
-            device_map=device_map,  # Importante:  usar device_map
-            cache_dir="models/" + model_name,
-            quantization_config=bnb_config,  # Aquí aplicamos la cuantización
-        )
-
-        self.pipeline = pipeline(
-            "text-generation",
-            model=self.model,
-            tokenizer=self.tokenizer,
-            max_new_tokens=400,  # Ajusta según necesidad
-            do_sample=True,
-            temperature=0.7,
-            top_k=40,
-            top_p=0.9,
-            repetition_penalty=1.1,
-            streamer=TextStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True),
-            # Para ver la respuesta en tiempo real
-            use_cache=True,
-        )
         self.relevant_docs = None
 
     def generate_prompt(self, query: str, context_documents: List[str]) -> str:
