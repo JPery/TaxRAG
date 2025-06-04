@@ -5,7 +5,7 @@ import streamlit as st
 from huggingface_hub import login
 
 from agent.chatbot import Chatbot
-from agent.constants import APP_NAME, DEFAULT_LANG, DATA_FOLDER, HUGGINGFACE_API_KEY, DEFAULT_TOP_K, WELCOME_MESSAGE, MAX_TOP_K, USE_OFFLINE_AGENTS
+from agent.constants import APP_NAME, DEFAULT_LANG, DATA_FOLDER, HUGGINGFACE_API_KEY, DEFAULT_TOP_K, WELCOME_MESSAGE, MAX_TOP_K
 from agent.retrievers import HybridRetriever
 
 torch.classes.__path__ = []  # add this line to manually set it to empty.
@@ -67,13 +67,12 @@ def main():
 
     # Muestra el historial de la conversación
     for message in chatbot.conversation_history:  # Separamos por los tokens de fin
-        if message.strip():  # Evita mensajes vacíos
-            if "<|user|>" in message:
-                with st.chat_message('user'):
-                    st.write(message.replace("<|user|>", "").strip())
-            elif "<|assistant|>" in message:
-                with st.chat_message('assistant'):
-                    st.write(message.replace("<|assistant|>", "").strip())
+        if message['role'] == "user":
+            with st.chat_message('user'):
+                st.write(message['content'][0]['text'].strip())
+        elif message['role'] == "assistant":
+            with st.chat_message('assistant'):
+                st.write(message['content'][0]['text'].strip())
 
     # Input del usuario
     user_query = st.chat_input("Escribe tu consulta aquí...")
@@ -81,15 +80,12 @@ def main():
     if user_query:  # Si el usuario ha escrito algo
         with st.chat_message("user"):
             st.write(user_query)  # Mostramos su pregunta
-        if USE_OFFLINE_AGENTS:
-            answer = chatbot.chat_local(user_query, top_k=top_k, device_setup="mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu"))  # Obtenemos la respuesta
-        else:
-            answer = chatbot.chat_remote(user_query, top_k=top_k,
-                                     device_setup="mps" if torch.backends.mps.is_available() else (
-                                         "cuda" if torch.cuda.is_available() else "cpu"))  # Obtenemos la respuesta
 
         with st.chat_message("assistant"):
-            st.write(answer)  # Mostramos la respuesta
+            with st.spinner('Generando respuesta...'):  # Muestra un spinner mientras genera
+                response_container = st.empty()  # Contenedor para la respuesta
+                answer = chatbot.chat(user_query, response_container, top_k=top_k)  # Obtenemos la respuesta
+        print(answer)
 
 
 if __name__ == '__main__':
