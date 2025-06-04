@@ -1,5 +1,6 @@
 from threading import Thread
 from typing import List, Dict
+import torch
 from huggingface_hub import login
 from openai import OpenAI
 from transformers import AutoTokenizer, Gemma3ForCausalLM, TextIteratorStreamer
@@ -95,6 +96,7 @@ class Chatbot:
             response += new_text
             if response_container:
                 response_container.markdown(response)
+        torch.cuda.empty_cache()
         return response
 
     def chat(self, query: str, response_container, lang: str = DEFAULT_LANG, top_k: int = DEFAULT_TOP_K):
