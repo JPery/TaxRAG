@@ -8,7 +8,7 @@ from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_
 client = OpenAI(
     api_key=OPENAI_API_KEY,
 )
-MODEL_NAME = "google/gemma-3-1b-it"
+MODEL_NAME = "google/gemma-3-4b-it"
 
 
 class Chatbot:
