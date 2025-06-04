@@ -1,8 +1,13 @@
+import gc
+import threading
+from collections import defaultdict
 from threading import Thread
 from typing import List, Dict
 import torch
+torch.classes.__path__ = [] # add this line to manually set it to empty.
 from huggingface_hub import login
 from openai import OpenAI
+from torch._inductor import cudagraph_trees
 from transformers import AutoTokenizer, Gemma3ForCausalLM, TextIteratorStreamer
 
 from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_PROMPT, OPENAI_API_KEY, \
@@ -77,27 +82,41 @@ class Chatbot:
         """Función principal de chat (adaptada para streaming)."""
 
         # Usamos .generate() directamente para tener más control (streaming y length_penalty)
-        inputs = self.tokenizer.apply_chat_template(
-            prompt,
-            add_generation_prompt=True,
-            tokenize=True,
-            return_dict=True,
-            return_tensors="pt",
-        ).to(self.model.device)
 
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
 
         #  Generamos en un hilo separado para no bloquear la interfaz
-        generation_kwargs = dict(inputs, max_new_tokens=LLM_MAX_TOKENS, repetition_penalty=1.2, top_p=0.95, streamer=streamer)
-        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
-        del inputs
+        def inference():
+            cudagraph_trees.local.tree_manager_containers = {}
+            cudagraph_trees.local.tree_manager_locks = defaultdict(threading.Lock)
+            torch._C._stash_obj_in_tls("tree_manager_containers", cudagraph_trees.local.tree_manager_containers)
+            torch._C._stash_obj_in_tls("tree_manager_locks", cudagraph_trees.local.tree_manager_locks)
+            inputs = self.tokenizer.apply_chat_template(
+                prompt,
+                add_generation_prompt=True,
+                tokenize=True,
+                return_dict=True,
+                return_tensors="pt",
+            ).to(self.model.device)
+            with torch.inference_mode():
+                self.model.generate(
+                    **inputs,
+                    max_new_tokens=LLM_MAX_TOKENS,
+                    repetition_penalty=1.2,
+                    top_p=0.95,
+                    streamer=streamer
+                )
+            del inputs
+            gc.collect()
+            with torch.no_grad():
+                torch.cuda.empty_cache()
+        thread = Thread(target=inference)
         thread.start()
         response = ""
         for new_text in streamer:
             response += new_text
             if response_container:
                 response_container.markdown(response)
-        torch.cuda.empty_cache()
         return response
 
     def chat(self, query: str, response_container, lang: str = DEFAULT_LANG, top_k: int = DEFAULT_TOP_K):
