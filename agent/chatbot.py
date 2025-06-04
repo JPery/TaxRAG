@@ -3,7 +3,7 @@ from typing import List, Dict
 from openai import OpenAI
 from transformers import AutoTokenizer, Gemma3ForCausalLM, TextIteratorStreamer
 
-from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_PROMPT, OPENAI_API_KEY,  USE_ONLINE_AGENTS
+from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_PROMPT, OPENAI_API_KEY, USE_ONLINE_AGENTS, LLM_MAX_TOKENS
 
 client = OpenAI(
     api_key=OPENAI_API_KEY,
@@ -83,7 +83,7 @@ class Chatbot:
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
 
         #  Generamos en un hilo separado para no bloquear la interfaz
-        generation_kwargs = dict(inputs, max_new_tokens=1024, repetition_penalty=1.2, top_p=0.95, streamer=streamer)
+        generation_kwargs = dict(inputs, max_new_tokens=LLM_MAX_TOKENS, repetition_penalty=1.2, top_p=0.95, streamer=streamer)
         thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
         thread.start()
         response = ""

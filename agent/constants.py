@@ -9,6 +9,7 @@ SENTENCE_TRANSFORMER_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_LANG = "english"
 DEFAULT_TOP_K = 25
 MAX_TOP_K = 50
+LLM_MAX_TOKENS = 512  # Max tokens for LLM response
 
 WELCOME_MESSAGE = f"Bienvenido. Soy {APP_NAME}. Con {APP_NAME}, puedes calcular el resultado de tu declaración de la renta 2024 / 2025 revisada por agentes IA fiscales"
 CONTEXT_PROMPT = "# Normativa sobre deducciones extraidos de la AEAT y otros recursos relevantes para la consulta del usuario:"
