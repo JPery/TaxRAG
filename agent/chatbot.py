@@ -28,6 +28,7 @@ class Chatbot:
                 model_name,
                 device_map=device_map,  # Importante:  usar device_map
                 cache_dir="models/" + model_name,
+                torch_dtype=torch.bfloat16,
             )
         else:
             print("Using OpenAI API")
