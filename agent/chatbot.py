@@ -1,9 +1,12 @@
 from threading import Thread
 from typing import List, Dict
+import torch
+from huggingface_hub import login
 from openai import OpenAI
 from transformers import AutoTokenizer, Gemma3ForCausalLM, TextIteratorStreamer
 
-from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_PROMPT, OPENAI_API_KEY, USE_ONLINE_AGENTS, LLM_MAX_TOKENS
+from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_PROMPT, OPENAI_API_KEY, \
+    USE_ONLINE_AGENTS, LLM_MAX_TOKENS, HUGGINGFACE_API_KEY
 
 client = OpenAI(
     api_key=OPENAI_API_KEY,
@@ -13,6 +16,7 @@ MODEL_NAME = "google/gemma-3-4b-it"
 
 class Chatbot:
     def __init__(self, retriever, model_name=MODEL_NAME, device_map="auto"):
+        login(HUGGINGFACE_API_KEY)
         self.retriever = retriever
         self.conversation_history = []
         self.device_map = device_map
@@ -85,13 +89,14 @@ class Chatbot:
         #  Generamos en un hilo separado para no bloquear la interfaz
         generation_kwargs = dict(inputs, max_new_tokens=LLM_MAX_TOKENS, repetition_penalty=1.2, top_p=0.95, streamer=streamer)
         thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
+        del inputs
         thread.start()
         response = ""
         for new_text in streamer:
             response += new_text
             if response_container:
                 response_container.markdown(response)
-
+        torch.cuda.empty_cache()
         return response
 
     def chat(self, query: str, response_container, lang: str = DEFAULT_LANG, top_k: int = DEFAULT_TOP_K):

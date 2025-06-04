@@ -2,17 +2,15 @@ import os
 import nltk
 import torch
 import streamlit as st
-from huggingface_hub import login
 
 from agent.chatbot import Chatbot
-from agent.constants import APP_NAME, DEFAULT_LANG, DATA_FOLDER, HUGGINGFACE_API_KEY, DEFAULT_TOP_K, WELCOME_MESSAGE, MAX_TOP_K
+from agent.constants import APP_NAME, DEFAULT_LANG, DATA_FOLDER, DEFAULT_TOP_K, WELCOME_MESSAGE, MAX_TOP_K
 from agent.retrievers import HybridRetriever
 
 torch.classes.__path__ = []  # add this line to manually set it to empty.
 
 from agent.utils import load_and_preprocess_data, load_retriever, save_retriever
 
-login(HUGGINGFACE_API_KEY)
 st.set_page_config(page_title=APP_NAME, page_icon="💸")
 
 
