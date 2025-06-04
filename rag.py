@@ -1,7 +1,8 @@
 import os
+import torch
+torch.classes.__path__ = [] # add this line to manually set it to empty.
 import nltk
 import streamlit as st
-
 from agent.chatbot import Chatbot
 from agent.constants import APP_NAME, DEFAULT_LANG, DATA_FOLDER, DEFAULT_TOP_K, WELCOME_MESSAGE, MAX_TOP_K
 from agent.retrievers import HybridRetriever

@@ -4,7 +4,6 @@ from collections import defaultdict
 from threading import Thread
 from typing import List, Dict
 import torch
-torch.classes.__path__ = [] # add this line to manually set it to empty.
 from huggingface_hub import login
 from openai import OpenAI
 from torch._inductor import cudagraph_trees
