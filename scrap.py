@@ -56,15 +56,15 @@ def print_doc(prev_text, item, doc_num):
     if 'items' in item:
         for i in item['items']:
             if prev_text:
-                print_doc(f"{prev_text} - {titulo}", i)
+                print_doc(f"{prev_text} - {titulo}", i, doc_num)
             else:
-                print_doc(titulo, i)
+                print_doc(titulo, i, doc_num)
     else:
         if prev_text:
             doc_title = f"{prev_text} - {titulo}"
         else:
             doc_title = titulo
-        with open(f"{BASE_FOLDER}/doc_{doc_num}_page_{page_num}.txt", "w", encoding="utf8") as f:
+        with open(f"{DATA_FOLDER}/doc_{doc_num}_page_{page_num}.txt", "w", encoding="utf8") as f:
             text = re.sub(r'\n\n+', r'\n', item['text'])
             f.write(f"{doc_title}\n\n{text}")
         page_num += 1
