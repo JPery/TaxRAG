@@ -1,13 +1,17 @@
 import os
 import re
+import sys
 import requests
 from bs4 import BeautifulSoup, Tag
 from markdownify import markdownify
 from agent.constants import DATA_FOLDER
 
-os.makedirs(DATA_FOLDER, exist_ok=True)
 BASE_URL = "https://sede.agenciatributaria.gob.es"
 
+if len(sys.argv) > 1:
+    DATA_FOLDER = sys.argv[1]
+
+os.makedirs(DATA_FOLDER, exist_ok=True)
 checked_urls = set()
 
 
