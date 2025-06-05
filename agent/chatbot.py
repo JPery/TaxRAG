@@ -10,7 +10,7 @@ from torch._inductor import cudagraph_trees
 from transformers import AutoTokenizer, Gemma3ForCausalLM, TextIteratorStreamer
 
 from agent.constants import SYSTEM_PROMPT, DEFAULT_LANG, DEFAULT_TOP_K, CONTEXT_PROMPT, OPENAI_API_KEY, \
-    USE_ONLINE_AGENTS, LLM_MAX_TOKENS, HUGGINGFACE_API_KEY
+    USE_ONLINE_AGENTS, LLM_MAX_TOKENS, HUGGINGFACE_API_KEY, DEFAULT_TEMPERATURE, DEFAULT_TOP_P
 
 client = OpenAI(
     api_key=OPENAI_API_KEY,
@@ -63,8 +63,8 @@ class Chatbot:
         completion = client.chat.completions.create(
             messages=prompt[0],
             model="gpt-4.1-nano",
-            temperature=0.5,
-            top_p=0.95,
+            temperature=DEFAULT_TEMPERATURE,
+            top_p=DEFAULT_TOP_P,
             stream=True
         )
         # Stream the response
@@ -100,9 +100,12 @@ class Chatbot:
             with torch.inference_mode():
                 self.model.generate(
                     **inputs,
-                    max_new_tokens=LLM_MAX_TOKENS,
+                    do_sample=True,
+                    length_penalty=1.2,
                     repetition_penalty=1.2,
-                    top_p=0.95,
+                    temperature=DEFAULT_TEMPERATURE,
+                    max_new_tokens=LLM_MAX_TOKENS,
+                    top_p=DEFAULT_TOP_P,
                     streamer=streamer
                 )
             del inputs
