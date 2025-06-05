@@ -2,6 +2,7 @@ import os
 import re
 import requests
 from bs4 import BeautifulSoup, Tag
+from markdownify import markdownify
 from agent.constants import DATA_FOLDER
 
 os.makedirs(DATA_FOLDER, exist_ok=True)
@@ -37,9 +38,9 @@ def parse_web(url):
             }
 
     text = ""
-    for x in main.find("h1").next_siblings:
+    for x in header.next_siblings:
         if type(x) is Tag and x.name != 'div':
-            item_text = x.text
+            item_text = markdownify(str(x))
             if item_text:
                 text += " " + x.text + "\n"
 
