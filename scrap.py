@@ -37,44 +37,41 @@ def parse_web(url):
                 'items': data
             }
 
-    text = ""
+    new = BeautifulSoup('')
     for x in header.next_siblings:
         if type(x) is Tag and x.name != 'div':
-            item_text = markdownify(str(x))
-            if item_text:
-                text += " " + x.text + "\n"
-
-    return {
-        "title": title,
-        "text": text
-    }
+            new.append(x)
+    text = markdownify(str(new), heading_style="ATX", bullets="-")
+    if title and text:
+        return {
+            "title": title,
+            "text": text
+        }
 
 
 def print_doc(prev_text, item, doc_num):
-    page_num = 0
-    titulo = item.get('title', '')
+    global page_num
+    title = item.get('title', '')
+    if prev_text:
+        doc_title = f"{prev_text} - {title}"
+    else:
+        doc_title = title
     if 'items' in item:
         for i in item['items']:
-            if prev_text:
-                print_doc(f"{prev_text} - {titulo}", i, doc_num)
-            else:
-                print_doc(titulo, i, doc_num)
+            print_doc(doc_title, i, doc_num)
     else:
-        if prev_text:
-            doc_title = f"{prev_text} - {titulo}"
-        else:
-            doc_title = titulo
         with open(f"{DATA_FOLDER}/doc_{doc_num}_page_{page_num}.txt", "w", encoding="utf8") as f:
             text = re.sub(r'\n\n+', r'\n', item['text'])
-            f.write(f"{doc_title}\n\n{text}")
+            f.write(f"# {doc_title}\n{text}")
         page_num += 1
 
 
 if __name__ == '__main__':
-    for doc_num, url in enumerate([
-        "/Sede/Ayuda/24Manual/100.html",
-        "/Sede/Ayuda/24Manual/100/deducciones-autonomicas.html"
+    for doc_num, (url, prev_text) in enumerate([
+        ("/Sede/Ayuda/24Manual/100.html", ""),
+        ("/Sede/Ayuda/24Manual/100/deducciones-autonomicas.html", "Deducciones autonómicas")
     ]):
+        page_num = 0
         data = parse_web(url)
-        for i in data['items'][1:]:
-            print_doc("", i, doc_num)
+        for i in data['items']:
+            print_doc(prev_text, i, doc_num)
