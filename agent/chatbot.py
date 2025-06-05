@@ -42,7 +42,7 @@ class Chatbot:
     def generate_prompt(self, query: str, context_documents: List[str]) -> List[List[Dict]]:
         context = ""
         for i, doc in enumerate(context_documents):
-            context += f"## Documento {i + 1}:\n{doc}\n"
+            context += f"\n{doc}\n"
         system_prompt = f"{CONTEXT_PROMPT}\n\n{context}\n{SYSTEM_PROMPT}"
         prompt = [
             [
@@ -86,10 +86,12 @@ class Chatbot:
 
         #  Generamos en un hilo separado para no bloquear la interfaz
         def inference():
+            # Code to fix threading problem in torch
             cudagraph_trees.local.tree_manager_containers = {}
             cudagraph_trees.local.tree_manager_locks = defaultdict(threading.Lock)
             torch._C._stash_obj_in_tls("tree_manager_containers", cudagraph_trees.local.tree_manager_containers)
             torch._C._stash_obj_in_tls("tree_manager_locks", cudagraph_trees.local.tree_manager_locks)
+            # Aplicamos la plantilla de chat y tokenizamos
             inputs = self.tokenizer.apply_chat_template(
                 prompt,
                 add_generation_prompt=True,
