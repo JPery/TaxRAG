@@ -6,11 +6,11 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY", "")
 USE_ONLINE_AGENTS = os.getenv("USE_ONLINE_AGENTS", 'False').lower() in ('true', '1', 't')
 SENTENCE_TRANSFORMER_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-DEFAULT_LANG = "english"
+DEFAULT_LANG = "spanish"
 DEFAULT_TOP_K = 25
 MAX_TOP_K = 50
 LLM_MAX_TOKENS = 512  # Max tokens for LLM response
-DEFAULT_TEMPERATURE = 0.3
+DEFAULT_TEMPERATURE = 0.1
 DEFAULT_TOP_P = 0.95
 
 WELCOME_MESSAGE = f"Bienvenido. Soy {APP_NAME}. Con {APP_NAME}, puedes calcular el resultado de tu declaración de la renta 2024 / 2025 revisada por agentes IA fiscales"

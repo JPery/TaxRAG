@@ -5,10 +5,7 @@ from nltk import word_tokenize
 from nltk.corpus import stopwords
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics.pairwise import cosine_similarity
-
 from agent.constants import DEFAULT_LANG, DEFAULT_TOP_K, SENTENCE_TRANSFORMER_MODEL
 
 
@@ -58,41 +55,6 @@ class Retriever(ABC):
     @abstractmethod
     def search_documents(self, query: str, top_k: int = DEFAULT_TOP_K, lang: str = DEFAULT_LANG) -> List[str]:
         pass
-
-
-class SparseRetrieverNM(Retriever):
-
-    def __init__(self):
-        super().__init__("sparse_retriever_nm")
-        self.vectorizer = TfidfVectorizer()
-        self.nn_model = NearestNeighbors(n_neighbors=5, metric="cosine", algorithm="auto")
-
-    """
-    Construye el índice usando TF-IDF
-    """
-
-    def build_index(self, documents: List[str], lang: str = DEFAULT_LANG):
-        self.documents = documents
-        # Limpiar tokens innecesarios
-        processed_docs = [TextPreprocessor.preprocess(doc, lang) for doc in self.documents]
-        # Generar embeddings dispersos TF-IDF
-        self.tfidf_matrix = self.vectorizer.fit_transform(processed_docs)
-        # Construir un modelo de búsqueda eficiente
-        self.nn_model.fit(self.tfidf_matrix)
-
-    def search(self, query: str, top_k: int = DEFAULT_TOP_K, lang: str = DEFAULT_LANG) -> List[Tuple[int, float]]:
-        # Vectorizar la consulta
-        processed_query = TextPreprocessor.preprocess(query, lang)
-        query_vector = self.vectorizer.transform([processed_query])
-
-        # Encontrar los vecinos más cercanos
-        distances, indices = self.nn_model.kneighbors(query_vector, n_neighbors=top_k)
-        # Retornar resultados como documentos y distancias inversas (para similitud)
-        return [(idx, score) for idx, score in zip(indices[0], distances[0])][::-1]
-
-    def search_documents(self, query: str, top_k: int = DEFAULT_TOP_K, lang: str = DEFAULT_LANG) -> List[str]:
-        relevant_documents = self.search(query, top_k, lang)
-        return [self.documents[idx] for idx, score in relevant_documents]
 
 
 class SparseRetriever(Retriever):
