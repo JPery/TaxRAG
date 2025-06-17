@@ -122,10 +122,10 @@ class Chatbot:
                 response_container.markdown(response)
         return response
 
-    def chat(self, query: str, response_container, lang: str = DEFAULT_LANG, top_k: int = DEFAULT_TOP_K):
-        if self.relevant_docs is None:
-            self.relevant_docs = self.retriever.search_documents(query, top_k=top_k, lang=lang)
-        prompt = self.generate_prompt(query, self.relevant_docs)
+    def chat(self, user_input: str, response_container, lang: str = DEFAULT_LANG, top_k: int = DEFAULT_TOP_K):
+        search_query = "\n".join([x['content'][0]['text'] for x in filter(lambda x: x['role'] == 'user', self.conversation_history)]) + '\n' + user_input
+        relevant_docs = self.retriever.search_documents(search_query, top_k=top_k, lang=lang)
+        prompt = self.generate_prompt(user_input, relevant_docs)
         if not USE_ONLINE_AGENTS:
             response = self.chat_local(prompt, response_container)
         else:
@@ -134,7 +134,7 @@ class Chatbot:
         self.conversation_history.extend([
             {
                 "role": "user",
-                "content": [{"type": "text", "text": query}, ]
+                "content": [{"type": "text", "text": user_input}, ]
             },
             {
                 "role": "assistant",
